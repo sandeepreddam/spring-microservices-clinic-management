@@ -1,0 +1,75 @@
+name: Healthcare CI/CD
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Build applications
+        run: ./mvnw clean package -DskipTests
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::781952934896:role/healthcare-dev-github-actions-role
+          aws-region: ap-south-2
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set image tag
+        run: echo "IMAGE_TAG=${GITHUB_SHA}" >> $GITHUB_ENV
+
+      - name: Build and push Eureka image
+        run: |
+          docker build \
+            -f devops/docker/eureka/Dockerfile \
+            -t 781952934896.dkr.ecr.ap-south-2.amazonaws.com/healthcare-eureka:${IMAGE_TAG} \
+            .
+          docker push \
+            781952934896.dkr.ecr.ap-south-2.amazonaws.com/healthcare-eureka:${IMAGE_TAG}
+
+      - name: Build and push Patient image
+        run: |
+          docker build \
+            -f devops/docker/patient/Dockerfile \
+            -t 781952934896.dkr.ecr.ap-south-2.amazonaws.com/healthcare-patient:${IMAGE_TAG} \
+            .
+          docker push \
+            781952934896.dkr.ecr.ap-south-2.amazonaws.com/healthcare-patient:${IMAGE_TAG}
+
+      - name: Build and push Appointment image
+        run: |
+          docker build \
+            -f devops/docker/appointment/Dockerfile \
+            -t 781952934896.dkr.ecr.ap-south-2.amazonaws.com/healthcare-appointment:${IMAGE_TAG} \
+            .
+          docker push \
+            781952934896.dkr.ecr.ap-south-2.amazonaws.com/healthcare-appointment:${IMAGE_TAG}
+
+      - name: Build and push Doctor image
+        run: |
+          docker build \
+            -f devops/docker/doctor/Dockerfile \
+            -t 781952934896.dkr.ecr.ap-south-2.amazonaws.com/healthcare-doctor:${IMAGE_TAG} \
+            .
+          docker push \
+            781952934896.dkr.ecr.ap-south-2.amazonaws.com/healthcare-doctor:${IMAGE_TAG}
