@@ -20,7 +20,7 @@ resource "aws_iam_role" "github_actions" {
           }
 
           StringLike = {
-            "token.actions.githubusercontent.com:sub" = "repo:sandeepreddam/spring-microservices-clinic-management:*"
+            "token.actions.githubusercontent.com:sub" = "repo:sandeepreddam@196306213/spring-microservices-clinic-management@1384195969:ref:refs/heads/main"
           }
         }
       }
